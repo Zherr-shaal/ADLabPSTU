@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.asuris19.recorder.adapters.PlaybackAdapter;
 import com.asuris19.recorder.databinding.FragmentRecordListBinding;
 
 public class RecordListFragment extends Fragment {
@@ -23,6 +24,8 @@ public class RecordListFragment extends Fragment {
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getActivity());
         linearLayoutManager.setReverseLayout(true);
         linearLayoutManager.setStackFromEnd(true);
+        binding.recyclerPlayback.setLayoutManager(linearLayoutManager);
+        binding.recyclerPlayback.setAdapter(new PlaybackAdapter());
 
         return binding.getRoot();
     }

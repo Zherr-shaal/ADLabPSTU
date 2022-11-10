@@ -47,6 +47,18 @@
                     android:textSize="16sp"
                     tool:text="DD.MM.YYYY hh:mm" />
 
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+                <TextView
+                    android:id="@+id/record_length"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="?attr/colorSecondary"
+                    android:textSize="14sp"
+                    tool:text="00:00" />
             </LinearLayout>
 
             <SeekBar
