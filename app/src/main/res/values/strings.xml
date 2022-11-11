@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Recorder</string>
+    <string name="record_in_progress">Идёт запись</string>
+    <string name="pause_recording_button">Пауза</string>
+    <string name="remove_record">Удалить</string>
+    <string name="save_record">Сохранить</string>
 </resources>
