@@ -3,6 +3,8 @@ package com.asuris19.recorder.adapters;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -37,6 +39,13 @@ public class PlaybackAdapter extends RecyclerView.Adapter<PlaybackAdapter.ViewHo
         holder.recordName.setText("Sample record");
         holder.recordLength.setText("99:99");
         holder.createdDate.setText("yesterday");
+
+        holder.playButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                holder.seekBar.setVisibility(View.VISIBLE);
+            }
+        });
     }
 
     @Override
@@ -48,6 +57,8 @@ public class PlaybackAdapter extends RecyclerView.Adapter<PlaybackAdapter.ViewHo
         private final TextView recordName;
         private final TextView recordLength;
         private final TextView createdDate;
+        private final ImageButton playButton;
+        private final SeekBar seekBar;
 
 
         public ViewHolder(@NonNull View itemView) {
@@ -56,6 +67,8 @@ public class PlaybackAdapter extends RecyclerView.Adapter<PlaybackAdapter.ViewHo
             recordName = itemView.findViewById(R.id.record_name);
             recordLength = itemView.findViewById(R.id.record_length);
             createdDate = itemView.findViewById(R.id.created_date);
+            playButton = itemView.findViewById(R.id.play_button);
+            seekBar = itemView.findViewById(R.id.seekbar);
         }
     }
 }
