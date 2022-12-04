@@ -1,5 +1,6 @@
 package com.asuris19.recorder.adapters;
 
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,8 +12,19 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.asuris19.recorder.R;
+import com.asuris19.recorder.RecordsDatabase;
+import com.asuris19.recorder.models.RecordModel;
+
+import java.text.SimpleDateFormat;
+import java.util.concurrent.TimeUnit;
 
 public class PlaybackAdapter extends RecyclerView.Adapter<PlaybackAdapter.ViewHolder> {
+
+    private RecordsDatabase mDatabase = null;
+
+    public PlaybackAdapter(Context context) {
+        mDatabase = new RecordsDatabase(context);
+    }
 
     @NonNull
     @Override
@@ -36,9 +48,17 @@ public class PlaybackAdapter extends RecyclerView.Adapter<PlaybackAdapter.ViewHo
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        holder.recordName.setText("Sample record");
-        holder.recordLength.setText("99:99");
-        holder.createdDate.setText("yesterday");
+        RecordModel record = mDatabase.getItemAt(position);
+
+        long itemDuration = record.getLength();
+
+        long minutes = TimeUnit.MILLISECONDS.toMinutes(itemDuration);
+        long seconds = TimeUnit.MILLISECONDS.toSeconds(itemDuration)
+                - TimeUnit.MINUTES.toSeconds(minutes);
+
+        holder.recordName.setText(record.getName());
+        holder.recordLength.setText(String.format("%02d:%02d", new Object[]{minutes, seconds}));
+        holder.createdDate.setText(new SimpleDateFormat().format(record.getTime()));
 
         holder.playButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -50,7 +70,7 @@ public class PlaybackAdapter extends RecyclerView.Adapter<PlaybackAdapter.ViewHo
 
     @Override
     public int getItemCount() {
-        return 100;
+        return mDatabase.getCount();
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {

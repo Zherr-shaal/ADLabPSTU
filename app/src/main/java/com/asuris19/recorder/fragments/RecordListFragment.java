@@ -25,7 +25,7 @@ public class RecordListFragment extends Fragment {
         linearLayoutManager.setReverseLayout(true);
         linearLayoutManager.setStackFromEnd(true);
         binding.recyclerPlayback.setLayoutManager(linearLayoutManager);
-        binding.recyclerPlayback.setAdapter(new PlaybackAdapter());
+        binding.recyclerPlayback.setAdapter(new PlaybackAdapter(getActivity()));
 
         return binding.getRoot();
     }
