@@ -4,4 +4,5 @@
     <string name="pause_recording_button">Пауза</string>
     <string name="remove_record">Удалить</string>
     <string name="save_record">Сохранить</string>
+    <string name="toast_recording_finish">Запись сохранена</string>
 </resources>

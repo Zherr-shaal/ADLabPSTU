@@ -1,6 +1,7 @@
 package com.asuris19.recorder;
 
 import android.annotation.SuppressLint;
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -80,5 +81,17 @@ public class RecordsDatabase extends SQLiteOpenHelper {
         int count = c.getCount();
         c.close();
         return count;
+    }
+
+    public long addRecording(String recordingName, String filePath, long length) {
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(RecordingTable.COLUMN_NAME_RECORDING_NAME, recordingName);
+        cv.put(RecordingTable.COLUMN_NAME_RECORDING_FILE_PATH, filePath);
+        cv.put(RecordingTable.COLUMN_NAME_RECORDING_LENGTH, length);
+        cv.put(RecordingTable.COLUMN_NAME_TIME_ADDED, System.currentTimeMillis());
+        long rowId = db.insert(RecordingTable.TABLE_NAME, null, cv);
+
+        return rowId;
     }
 }
