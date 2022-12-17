@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.asuris19.recorder.R;
 import com.asuris19.recorder.activities.MainActivity;
 import com.asuris19.recorder.adapters.PlaybackAdapter;
 import com.asuris19.recorder.databinding.FragmentRecordListBinding;
@@ -43,6 +44,8 @@ public class RecordListFragment extends Fragment {
                 activity.pushFragment(recordFragment);
             }
         });
+
+        binding.toolbar.setTitle(R.string.app_name);
     }
 
     @Override
