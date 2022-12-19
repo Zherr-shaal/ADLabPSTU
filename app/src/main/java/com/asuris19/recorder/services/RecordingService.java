@@ -42,14 +42,22 @@ public class RecordingService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        startRecording();
+        final Boolean shouldStop = intent.getBooleanExtra("stop", false);
+        final Boolean shouldSave = intent.getBooleanExtra("save", false);
+
+        if (shouldStop) {
+            stopRecording(shouldSave);
+            stopSelf();
+        } else {
+            startRecording();
+        }
+
         return START_STICKY;
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        stopRecording();
     }
 
     private void startRecording() {
@@ -89,17 +97,22 @@ public class RecordingService extends Service {
         } while (file.exists() && !file.isDirectory());
     }
 
-    private void stopRecording() {
-        Toast.makeText(this, getString(R.string.toast_recording_finish) + " " + mFilePath, Toast.LENGTH_LONG).show();
+    private void stopRecording(Boolean shouldSave) {
         mRecorder.stop();
         long mElapsedMillis = (System.currentTimeMillis() - mStartingTimeMillis);
         mRecorder.release();
         mRecorder = null;
 
-        try {
-            mDatabase.addRecording(mFileName, mFilePath, mElapsedMillis);
-        } catch (Exception e) {
-            Log.e(LOG_TAG, "exception", e);
+        if (shouldSave) {
+            try {
+                Toast.makeText(this, getString(R.string.toast_recording_finish) + " " + mFilePath, Toast.LENGTH_LONG).show();
+                mDatabase.addRecording(mFileName, mFilePath, mElapsedMillis);
+            } catch (Exception e) {
+                Log.e(LOG_TAG, "exception", e);
+            }
+        } else {
+            File file = new File(mFilePath);
+            file.delete();
         }
     }
 }

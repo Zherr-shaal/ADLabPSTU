@@ -19,6 +19,7 @@ import com.asuris19.recorder.services.RecordingService;
 public class RecordFragment extends Fragment {
     private FragmentRecordBinding binding;
     private Integer mCounter = 1;
+    private Boolean mIsStopped = false;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -34,7 +35,14 @@ public class RecordFragment extends Fragment {
         binding.saveRecord.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                stopRecording();
+                stopRecording(true);
+            }
+        });
+
+        binding.removeRecord.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                stopRecording(false);
             }
         });
 
@@ -43,6 +51,9 @@ public class RecordFragment extends Fragment {
 
     @Override
     public void onDestroyView() {
+        if (!mIsStopped) {
+            stopRecording(false);
+        }
         super.onDestroyView();
         binding = null;
     }
@@ -75,13 +86,20 @@ public class RecordFragment extends Fragment {
         getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
-    private void stopRecording() {
+    private void stopRecording(Boolean shouldSave) {
+        if (mIsStopped) return;
+
         Intent intent = new Intent(getActivity(), RecordingService.class);
 
         binding.chronometer.stop();
         binding.chronometer.setBase(SystemClock.elapsedRealtime());
 
-        getActivity().stopService(intent);
+        intent.putExtra("stop", true);
+        intent.putExtra("save", shouldSave);
+
+        getActivity().startService(intent);
         getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        mIsStopped = true;
     }
 }
