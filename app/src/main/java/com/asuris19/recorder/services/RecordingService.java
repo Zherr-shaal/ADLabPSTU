@@ -1,6 +1,10 @@
 package com.asuris19.recorder.services;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.media.MediaRecorder;
 import android.os.Environment;
@@ -8,16 +12,22 @@ import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.asuris19.recorder.R;
-import com.asuris19.recorder.RecordsDatabase;
+import androidx.core.app.NotificationCompat;
 
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Timer;
+import java.util.TimerTask;
+
+import com.asuris19.recorder.R;
+import com.asuris19.recorder.RecordsDatabase;
+import com.asuris19.recorder.activities.MainActivity;
 
 public class RecordingService extends Service {
+
     private static final String LOG_TAG = "RecordingService";
 
     private String mFileName = null;
@@ -28,10 +38,19 @@ public class RecordingService extends Service {
     private RecordsDatabase mDatabase;
 
     private long mStartingTimeMillis = 0;
+    private int mElapsedSeconds = 0;
+    private final OnTimerChangedListener onTimerChangedListener = null;
+    private static final SimpleDateFormat mTimerFormat = new SimpleDateFormat("mm:ss", Locale.getDefault());
+
+    private TimerTask mIncrementTimerTask = null;
 
     @Override
     public IBinder onBind(Intent intent) {
         return null;
+    }
+
+    public interface OnTimerChangedListener {
+        void onTimerChanged(int seconds);
     }
 
     @Override
@@ -51,7 +70,6 @@ public class RecordingService extends Service {
         } else {
             startRecording();
         }
-
         return START_STICKY;
     }
 
@@ -60,7 +78,7 @@ public class RecordingService extends Service {
         super.onDestroy();
     }
 
-    private void startRecording() {
+    public void startRecording() {
         setFileNameAndPath();
 
         mRecorder = new MediaRecorder();
@@ -77,12 +95,13 @@ public class RecordingService extends Service {
             mRecorder.start();
             mStartingTimeMillis = System.currentTimeMillis();
 
+            startTimer();
         } catch (IOException e) {
             Log.e(LOG_TAG, "prepare() failed");
         }
     }
 
-    private void setFileNameAndPath() {
+    public void setFileNameAndPath() {
         File file;
 
         do {
@@ -97,10 +116,19 @@ public class RecordingService extends Service {
         } while (file.exists() && !file.isDirectory());
     }
 
-    private void stopRecording(Boolean shouldSave) {
+    public void stopRecording(Boolean shouldSave) {
         mRecorder.stop();
         long mElapsedMillis = (System.currentTimeMillis() - mStartingTimeMillis);
         mRecorder.release();
+
+        // remove notification
+        if (mIncrementTimerTask != null) {
+            mIncrementTimerTask.cancel();
+            mIncrementTimerTask = null;
+            NotificationManager mgr = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            mgr.cancel(1);
+        }
+
         mRecorder = null;
 
         if (shouldSave) {
@@ -114,5 +142,34 @@ public class RecordingService extends Service {
             File file = new File(mFilePath);
             file.delete();
         }
+    }
+
+    private void startTimer() {
+        Timer mTimer = new Timer();
+        mIncrementTimerTask = new TimerTask() {
+            @Override
+            public void run() {
+                mElapsedSeconds++;
+                if (onTimerChangedListener != null)
+                    onTimerChangedListener.onTimerChanged(mElapsedSeconds);
+                NotificationManager mgr = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                mgr.notify(1, createNotification());
+            }
+        };
+        mTimer.scheduleAtFixedRate(mIncrementTimerTask, 1000, 1000);
+    }
+
+    private Notification createNotification() {
+        NotificationCompat.Builder mBuilder =
+                new NotificationCompat.Builder(getApplicationContext(), "Recording")
+                        .setSmallIcon(R.drawable.ic_mic)
+                        .setContentTitle(getString(R.string.notification_recording))
+                        .setContentText(mTimerFormat.format(mElapsedSeconds * 1000))
+                        .setOngoing(true);
+
+        mBuilder.setContentIntent(PendingIntent.getActivities(getApplicationContext(), 0,
+                new Intent[]{new Intent(getApplicationContext(), MainActivity.class)}, PendingIntent.FLAG_IMMUTABLE));
+
+        return mBuilder.build();
     }
 }
