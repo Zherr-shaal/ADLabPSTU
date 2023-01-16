@@ -5,4 +5,5 @@
     <string name="remove_record">Удалить</string>
     <string name="save_record">Сохранить</string>
     <string name="toast_recording_finish">Запись сохранена</string>
+    <string name="notification_recording">Идёт запись...</string>
 </resources>

@@ -1,6 +1,8 @@
 package com.asuris19.recorder.activities;
 
 import android.Manifest;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -59,6 +61,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
+        createNotificationChannel();
         changeFragment(new RecordListFragment());
     }
 
@@ -85,5 +88,15 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         return true;
+    }
+
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            NotificationChannel channel = new NotificationChannel("Recording", "Recording", importance);
+            channel.setDescription("Уведомление о записи");
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
     }
 }
