@@ -1,6 +1,9 @@
 package com.asuris19.recorder.adapters;
 
 import android.content.Context;
+import android.media.MediaPlayer;
+import android.os.Handler;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,12 +18,17 @@ import com.asuris19.recorder.R;
 import com.asuris19.recorder.RecordsDatabase;
 import com.asuris19.recorder.models.RecordModel;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.concurrent.TimeUnit;
 
 public class PlaybackAdapter extends RecyclerView.Adapter<PlaybackAdapter.ViewHolder> {
 
+    private Handler mHandler = new Handler();
     private RecordsDatabase mDatabase = null;
+    private ViewHolder mOpenedCard = null;
+    private RecordModel mRecordModel = null;
+    private MediaPlayer mMediaPlayer = null;
 
     public PlaybackAdapter(Context context) {
         mDatabase = new RecordsDatabase(context);
@@ -64,6 +72,53 @@ public class PlaybackAdapter extends RecyclerView.Adapter<PlaybackAdapter.ViewHo
             @Override
             public void onClick(View v) {
                 holder.seekBar.setVisibility(View.VISIBLE);
+                if (mOpenedCard != null && mOpenedCard != holder) {
+                    mOpenedCard.seekBar.setVisibility(View.GONE);
+                    mOpenedCard.isPlaying = false;
+                    mOpenedCard.isOnPause = false;
+                    mOpenedCard.playButton.setImageResource(R.drawable.baseline_play_arrow_24);
+                    mOpenedCard.createdDate.setText(new SimpleDateFormat().format(record.getTime()));
+                    stopPlaying();
+                }
+
+                mOpenedCard = holder;
+                mRecordModel = record;
+
+                if (!holder.isPlaying) {
+                    holder.playButton.setImageResource(R.drawable.baseline_pause_24);
+                    holder.isPlaying = true;
+                    if (holder.isOnPause) {
+                        resumePlaying();
+                    } else {
+                        startPlaying(holder.seekBar.getProgress());
+                    }
+                } else {
+                    holder.playButton.setImageResource(R.drawable.baseline_play_arrow_24);
+                    holder.isPlaying = false;
+                    pausePlaying();
+                }
+            }
+        });
+
+        holder.seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (mMediaPlayer != null && fromUser) {
+                    mMediaPlayer.seekTo(progress);
+                    mHandler.removeCallbacks(mRunnable);
+
+                    updateSeekBar();
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
             }
         });
     }
@@ -80,6 +135,8 @@ public class PlaybackAdapter extends RecyclerView.Adapter<PlaybackAdapter.ViewHo
         private final ImageButton playButton;
         private final SeekBar seekBar;
 
+        private boolean isPlaying = false;
+        private boolean isOnPause = false;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -90,5 +147,87 @@ public class PlaybackAdapter extends RecyclerView.Adapter<PlaybackAdapter.ViewHo
             playButton = itemView.findViewById(R.id.play_button);
             seekBar = itemView.findViewById(R.id.seekbar);
         }
+    }
+
+    private void startPlaying(int progress) {
+        if (mOpenedCard == null) return;
+
+        mOpenedCard.playButton.setImageResource(R.drawable.baseline_pause_24);
+        mMediaPlayer = new MediaPlayer();
+
+        try {
+            mMediaPlayer.setDataSource(mRecordModel.getFilePath());
+            mMediaPlayer.prepare();
+            mOpenedCard.seekBar.setMax(mMediaPlayer.getDuration());
+            if (progress != mOpenedCard.seekBar.getProgress()) {
+                mMediaPlayer.seekTo(progress);
+            }
+
+            mMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                @Override
+                public void onPrepared(MediaPlayer mp) {
+                    mMediaPlayer.start();
+                }
+            });
+        } catch (IOException e) {
+            Log.e("recorder", "prepare() failed");
+        }
+
+        mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                stopPlaying();
+                mOpenedCard.playButton.setImageResource(R.drawable.baseline_play_arrow_24);
+                mOpenedCard.seekBar.setProgress(mOpenedCard.seekBar.getMax());
+            }
+        });
+
+        updateSeekBar();
+    }
+
+    private void pausePlaying() {
+        if (mOpenedCard == null || mMediaPlayer == null) return;
+
+        mMediaPlayer.pause();
+        mHandler.removeCallbacks(mRunnable);
+    }
+
+    private void resumePlaying() {
+        mMediaPlayer.start();
+        updateSeekBar();
+    }
+
+    private void stopPlaying() {
+        if (mMediaPlayer == null) return;
+
+        mHandler.removeCallbacks(mRunnable);
+        mMediaPlayer.stop();
+        mMediaPlayer.reset();
+        mMediaPlayer.release();
+        mMediaPlayer = null;
+
+        mOpenedCard.isPlaying = false;
+    }
+
+    private Runnable mRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (mMediaPlayer != null && mOpenedCard != null) {
+
+                int currentPosition = mMediaPlayer.getCurrentPosition();
+                mOpenedCard.seekBar.setProgress(currentPosition);
+
+                long minutes = TimeUnit.MILLISECONDS.toMinutes(currentPosition);
+                long seconds = TimeUnit.MILLISECONDS.toSeconds(currentPosition) - TimeUnit.MINUTES.toSeconds(minutes);
+
+                mOpenedCard.recordLength.setText(String.format("%02d:%02d", minutes, seconds));
+
+                updateSeekBar();
+            }
+        }
+    };
+
+    private void updateSeekBar() {
+        mHandler.postDelayed(mRunnable, 1000);
     }
 }
