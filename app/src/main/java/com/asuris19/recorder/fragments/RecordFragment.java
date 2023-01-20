@@ -2,7 +2,9 @@ package com.asuris19.recorder.fragments;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.SystemClock;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,6 +18,8 @@ import com.asuris19.recorder.R;
 import com.asuris19.recorder.activities.MainActivity;
 import com.asuris19.recorder.databinding.FragmentRecordBinding;
 import com.asuris19.recorder.services.RecordingService;
+
+import java.io.File;
 
 public class RecordFragment extends Fragment {
     private FragmentRecordBinding binding;
@@ -64,6 +68,11 @@ public class RecordFragment extends Fragment {
     }
 
     private void startRecording() {
+        File folder = new File(Environment.getExternalStorageDirectory() + "/Recordings");
+        if (!folder.exists()) {
+            folder.mkdir();
+        }
+
         Intent intent = new Intent(getActivity(), RecordingService.class);
 
         binding.chronometer.setBase(SystemClock.elapsedRealtime());
@@ -88,6 +97,7 @@ public class RecordFragment extends Fragment {
         });
 
         getActivity().startService(intent);
+
         getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
