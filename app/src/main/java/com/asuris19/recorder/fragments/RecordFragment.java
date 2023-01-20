@@ -13,6 +13,7 @@ import android.widget.Chronometer;
 import androidx.fragment.app.Fragment;
 
 import com.asuris19.recorder.R;
+import com.asuris19.recorder.activities.MainActivity;
 import com.asuris19.recorder.databinding.FragmentRecordBinding;
 import com.asuris19.recorder.services.RecordingService;
 
@@ -36,6 +37,8 @@ public class RecordFragment extends Fragment {
             @Override
             public void onClick(View view) {
                 stopRecording(true);
+                MainActivity activity = (MainActivity) getActivity();
+                activity.popFragment();
             }
         });
 
@@ -43,6 +46,8 @@ public class RecordFragment extends Fragment {
             @Override
             public void onClick(View view) {
                 stopRecording(false);
+                MainActivity activity = (MainActivity) getActivity();
+                activity.popFragment();
             }
         });
 
