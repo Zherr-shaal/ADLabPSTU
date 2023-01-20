@@ -1,5 +1,6 @@
 package com.asuris19.recorder.adapters;
 
+import android.app.Activity;
 import android.content.Context;
 import android.media.MediaPlayer;
 import android.os.Handler;
@@ -14,6 +15,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.asuris19.recorder.AudioRecognizerApi;
 import com.asuris19.recorder.R;
 import com.asuris19.recorder.RecordsDatabase;
 import com.asuris19.recorder.models.RecordModel;
@@ -23,7 +25,7 @@ import java.text.SimpleDateFormat;
 import java.util.concurrent.TimeUnit;
 
 public class PlaybackAdapter extends RecyclerView.Adapter<PlaybackAdapter.ViewHolder> {
-
+    private Context mContext;
     private Handler mHandler = new Handler();
     private RecordsDatabase mDatabase = null;
     private ViewHolder mOpenedCard = null;
@@ -31,6 +33,7 @@ public class PlaybackAdapter extends RecyclerView.Adapter<PlaybackAdapter.ViewHo
     private MediaPlayer mMediaPlayer = null;
 
     public PlaybackAdapter(Context context) {
+        mContext = context;
         mDatabase = new RecordsDatabase(context);
     }
 
@@ -121,6 +124,30 @@ public class PlaybackAdapter extends RecyclerView.Adapter<PlaybackAdapter.ViewHo
 
             }
         });
+
+        holder.sttButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            String sttResult = AudioRecognizerApi.transcribe(record.getFilePath());
+                            ((Activity) mContext).runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    holder.sttButton.setVisibility(View.GONE);
+                                    holder.sttResult.setVisibility(View.VISIBLE);
+                                    holder.sttResult.setText(sttResult);
+                                }
+                            });
+                        } catch (Exception ex) {
+                            Log.e("Recorder", ex.getMessage());
+                        }
+                    }
+                }).start();
+            }
+        });
     }
 
     @Override
@@ -134,6 +161,8 @@ public class PlaybackAdapter extends RecyclerView.Adapter<PlaybackAdapter.ViewHo
         private final TextView createdDate;
         private final ImageButton playButton;
         private final SeekBar seekBar;
+        private final ImageButton sttButton;
+        private final TextView sttResult;
 
         private boolean isPlaying = false;
         private boolean isOnPause = false;
@@ -146,6 +175,8 @@ public class PlaybackAdapter extends RecyclerView.Adapter<PlaybackAdapter.ViewHo
             createdDate = itemView.findViewById(R.id.created_date);
             playButton = itemView.findViewById(R.id.play_button);
             seekBar = itemView.findViewById(R.id.seekbar);
+            sttButton = itemView.findViewById(R.id.stt_button);
+            sttResult = itemView.findViewById(R.id.stt_result);
         }
     }
 
