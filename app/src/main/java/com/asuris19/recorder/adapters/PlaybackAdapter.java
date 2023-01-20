@@ -98,6 +98,7 @@ public class PlaybackAdapter extends RecyclerView.Adapter<PlaybackAdapter.ViewHo
                 } else {
                     holder.playButton.setImageResource(R.drawable.baseline_play_arrow_24);
                     holder.isPlaying = false;
+                    holder.isOnPause = true;
                     pausePlaying();
                 }
             }
